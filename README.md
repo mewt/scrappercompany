@@ -53,6 +53,22 @@ This project uses:
 - BeautifulSoup: for parsing HTML content
 - time: for rate limiting
 
+## Installation
+
+To install the required dependencies, run:
+
+```bash
+pip install flask requests beautifulsoup4
+```
+
+Or create a requirements.txt file with:
+
+```
+Flask==2.3.3
+requests==2.31.0
+beautifulsoup4==4.12.2
+```
+
 ## Note
 
 This project implements rate limiting to be respectful to the target website. Please use responsibly and comply with the target website's terms of service.
