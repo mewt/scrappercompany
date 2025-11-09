@@ -6,6 +6,10 @@ A Flask-based web API that scrapes company information from companieshouse.id.
 
 This project provides a simple API that allows you to search for Indonesian company information by name. It uses web scraping techniques to retrieve data from companieshouse.id and returns it in a structured JSON format.
 
+## Educational Purpose
+
+**Note**: This project is created for educational purposes only. It demonstrates web scraping techniques, API development with Flask, and proper handling of HTTP requests. Please use responsibly and be aware that web scraping may be subject to terms of service and legal restrictions. I don't guarantee anything regarding the functionality or legal compliance of this code.
+
 ## Features
 
 - RESTful API endpoint to search for company data
