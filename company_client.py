@@ -83,6 +83,62 @@ def scrape_detail_page(detail_url):
         return None
 
 
+def check_company_exists(company_name):
+    """
+    Lightweight check to verify if a company exists without scraping full details.
+    Only performs the search step, much faster than extract_company_data.
+    
+    Returns:
+        dict: {'exists': True, 'name': 'Company Name', 'url': 'detail_url'} if found
+        None: If company not found
+    """
+    search_url = SEARCH_BASE_URL + quote_plus(company_name)
+    print(f"[CHECK] Searching for company: {company_name}")
+    
+    # Standardize the input name for a loose comparison
+    standardized_input_name = standardize_name(company_name)
+
+    try:
+        # Rate Limiting: Pause before making the search request
+        time.sleep(1)
+        search_response = requests.get(search_url, headers=HEADERS, timeout=10)
+        search_response.raise_for_status()
+        search_soup = BeautifulSoup(search_response.content, 'html.parser')
+        
+        # Target the <a> tag by comparing the standardized input name to the standardized title attribute
+        all_links = search_soup.find_all('a', href=True)
+        target_link = None
+        for link in all_links:
+            title = link.get('title', '')
+            if title and standardized_input_name == standardize_name(title):
+                target_link = link
+                break
+        
+        if not target_link:
+            print(f"[CHECK] Company '{company_name}' not found in search results.")
+            return None
+            
+        relative_url = target_link.get('href')
+        
+        if not relative_url:
+            print("[CHECK] Found company name but link (href) was missing.")
+            return None
+              
+        # Create the absolute URL for the detail page
+        detail_page_url = urljoin(BASE_DOMAIN, relative_url)
+        
+        print(f"[CHECK] Company found: {target_link.get('title', company_name)}")
+        return {
+            'exists': True,
+            'name': target_link.get('title', company_name),
+            'url': detail_page_url
+        }
+
+    except requests.exceptions.RequestException as e:
+        print(f"[CHECK] Error during search request: {e}")
+        return None
+
+
 def extract_company_data(company_name):
     """
     Performs the two-step scrape: Search -> Find Link -> Scrape Detail Page.
@@ -121,7 +177,7 @@ def extract_company_data(company_name):
         if not relative_url:
              print("Found company name but link (href) was missing.")
              return None
-             
+              
         # Create the absolute URL for the detail page
         detail_page_url = urljoin(BASE_DOMAIN, relative_url)
         

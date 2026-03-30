@@ -1,34 +1,40 @@
 from flask import Flask, jsonify, request
-from company_client import extract_company_data # Import the scraper function
+from company_client import extract_company_data, check_company_exists
 
 app = Flask(__name__)
 
-# Define the API endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    return jsonify({"status": "healthy"}), 200
+
+@app.route('/company/check', methods=['GET'])
+def check_company():
+    """
+    Lightweight check if company exists.
+    Returns: 200 if found, 404 if not found
+    """
+    company_name = request.args.get('name')
+    if not company_name:
+        return jsonify({"error": "Missing 'name' parameter"}), 400
+    
+    result = check_company_exists(company_name)
+    if result is None:
+        return jsonify({"exists": False}), 404
+    return jsonify(result), 200
+
 @app.route('/company/search', methods=['GET'])
 def search_company():
-    """
-    API endpoint to search for company data.
-    Usage: GET /company/search?name=PT.%20Buka%20Bumi%20Konstruksi
-    """
-    
-    # Get the company name dynamically from the URL query string
+    """Full company search with data extraction."""
     company_name = request.args.get('name')
-    
-    # Validate input
     if not company_name:
-        return jsonify({"error": "Missing 'name' parameter in the request."}), 400
+        return jsonify({"error": "Missing 'name' parameter"}), 400
 
-    # Call the scraper function with the dynamic input
     company_info = extract_company_data(company_name)
-    
-    # Handle success or failure
     if company_info is None:
-        return jsonify({"error": f"Could not find or extract information for '{company_name}'. Please verify the company name."}), 503
-        
-    # Return the extracted data as JSON
+        return jsonify({"error": f"Could not find company '{company_name}'"}), 503
     return jsonify(company_info)
 
 if __name__ == '__main__':
     print("Starting Flask API server...")
-    # Run in debug mode for development
     app.run(debug=True)

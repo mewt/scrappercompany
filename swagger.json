@@ -15,10 +15,96 @@
     }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns the health status of the API service for monitoring",
+        "operationId": "healthCheck",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy and operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                },
+                "example": {
+                  "status": "healthy"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/company/check": {
+      "get": {
+        "summary": "Check if company exists (lightweight)",
+        "description": "Quick check to verify if a company exists without scraping full details. Much faster than /company/search (2-5 seconds vs 30+ seconds).",
+        "operationId": "checkCompany",
+        "tags": ["Company"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "The company name to check (URL-encoded)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "PT. Buka Bumi Konstruksi"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCheck"
+                },
+                "example": {
+                  "exists": true,
+                  "name": "PT. Buka Bumi Konstruksi",
+                  "url": "https://companieshouse.id/buka-bumi-konstruksi"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyNotFound"
+                },
+                "example": {
+                  "exists": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Missing 'name' parameter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/company/search": {
       "get": {
-        "summary": "Search for company information",
-        "description": "Searches for Indonesian company data by name using web scraping from companieshouse.id",
+        "summary": "Search for company information (full extraction)",
+        "description": "Searches for Indonesian company data by name and extracts full details from companieshouse.id. Slower but returns complete information.",
         "operationId": "searchCompany",
         "tags": ["Company"],
         "parameters": [
@@ -59,7 +145,7 @@
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "Missing 'name' parameter in the request."
+                  "error": "Missing 'name' parameter"
                 }
               }
             }
@@ -83,6 +169,51 @@
   },
   "components": {
     "schemas": {
+      "HealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Health status of the service",
+            "enum": ["healthy"],
+            "example": "healthy"
+          }
+        },
+        "required": ["status"]
+      },
+      "CompanyCheck": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "description": "Whether the company was found",
+            "example": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The official registered name of the company",
+            "example": "PT. Buka Bumi Konstruksi"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to the company detail page",
+            "example": "https://companieshouse.id/buka-bumi-konstruksi"
+          }
+        },
+        "required": ["exists", "name", "url"]
+      },
+      "CompanyNotFound": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "description": "Whether the company was found",
+            "enum": [false],
+            "example": false
+          }
+        },
+        "required": ["exists"]
+      },
       "CompanyData": {
         "type": "object",
         "properties": {
@@ -125,5 +256,15 @@
         "required": ["error"]
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check and monitoring endpoints"
+    },
+    {
+      "name": "Company",
+      "description": "Company information search and verification"
+    }
+  ]
 }
